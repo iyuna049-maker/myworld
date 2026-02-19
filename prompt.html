@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>프롬프트 엔지니어링 가이드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Noto+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #F7F5FF;
+  --bg2:       #FFFFFF;
+  --bg3:       #F0EEF8;
+  --border:    #E4E0F5;
+  --coral:     #FF6B6B;
+  --mint:      #38D9A9;
+  --lavender:  #845EF7;
+  --yellow:    #FAB005;
+  --sky:       #4DABF7;
+  --pink:      #F783AC;
+  --text:      #2D2440;
+  --muted:     #8B82A7;
+  --code-bg:   #F0EEF8;
+  --radius:    16px;
+  --radius-sm: 10px;
+  --shadow:    0 4px 24px rgba(100,80,180,0.10);
+  --shadow-lg: 0 12px 40px rgba(100,80,180,0.15);
+  --sans:      'Noto Sans KR', sans-serif;
+  --display:   'Nunito', sans-serif;
+  --mono:      'JetBrains Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.8;
+  overflow-x: hidden;
+}
+
+/* Dot pattern background */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: radial-gradient(circle, rgba(132,94,247,0.08) 1.5px, transparent 1.5px);
+  background-size: 28px 28px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: #D0C8EE; border-radius: 3px; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  position: fixed; left: 0; top: 0; bottom: 0;
+  width: 244px;
+  background: var(--bg2);
+  border-right: 2px solid var(--border);
+  overflow-y: auto;
+  z-index: 100;
+  padding: 0 0 80px;
+  transition: transform 0.3s ease;
+  box-shadow: 4px 0 24px rgba(132,94,247,0.06);
+}
+
+.sidebar-logo {
+  padding: 28px 22px 22px;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #F0EBF8 0%, #E8F4FF 100%);
+}
+.sidebar-logo .logo-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--lavender);
+  margin-bottom: 10px;
+}
+.sidebar-logo .logo-tag::before {
+  content: '✦';
+  font-size: 8px;
+}
+.sidebar-logo h1 {
+  font-family: var(--display);
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.4;
+}
+.sidebar-logo h1 span { color: var(--lavender); }
+
+.nav-section-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+  padding: 14px 22px 6px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 22px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 0 20px 20px 0;
+  margin-right: 12px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.nav-item:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active {
+  background: linear-gradient(90deg, #EDE8FF, #F0F8FF);
+  color: var(--lavender);
+  font-weight: 700;
+}
+.nav-item .nav-num {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: #C8C0E0;
+  min-width: 18px;
+}
+.nav-item.active .nav-num { color: var(--lavender); }
+
+/* ── MAIN ── */
+.main {
+  margin-left: 244px;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── HERO ── */
+.hero {
+  padding: 72px 64px 56px;
+  background: linear-gradient(135deg, #EDE8FF 0%, #E8F4FF 50%, #FFF0F6 100%);
+  border-bottom: 2px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '✦';
+  position: absolute;
+  top: 24px; right: 80px;
+  font-size: 120px;
+  color: rgba(132,94,247,0.06);
+  font-family: var(--display);
+  pointer-events: none;
+}
+.hero::after {
+  content: '◆';
+  position: absolute;
+  bottom: -20px; right: 200px;
+  font-size: 80px;
+  color: rgba(56,217,169,0.08);
+  pointer-events: none;
+}
+
+.hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--lavender);
+  background: rgba(132,94,247,0.1);
+  border: 1.5px solid rgba(132,94,247,0.2);
+  padding: 6px 16px;
+  border-radius: 100px;
+  margin-bottom: 22px;
+}
+.hero-tag::before { content: '✦'; font-size: 9px; }
+
+.hero h1 {
+  font-family: var(--display);
+  font-size: 48px;
+  font-weight: 900;
+  line-height: 1.15;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+.hero h1 .hl-coral  { color: var(--coral); }
+.hero h1 .hl-lavender { color: var(--lavender); }
+
+.hero p {
+  color: var(--muted);
+  font-size: 15px;
+  max-width: 540px;
+  line-height: 1.9;
+}
+
+.hero-pills {
+  display: flex;
+  gap: 10px;
+  margin-top: 28px;
+  flex-wrap: wrap;
+}
+.hero-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg2);
+  border: 2px solid var(--border);
+  border-radius: 100px;
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+.hero-pill .dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── SECTIONS ── */
+.section {
+  padding: 60px 64px;
+  border-bottom: 2px solid var(--border);
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+  background: var(--bg2);
+}
+.section:nth-child(even) { background: var(--bg); }
+.section.visible { opacity: 1; transform: translateY(0); }
+
+.section-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  margin-bottom: 36px;
+}
+.section-num {
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--bg2);
+  background: var(--lavender);
+  width: 32px; height: 32px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  margin-top: 4px;
+  box-shadow: 0 4px 12px rgba(132,94,247,0.3);
+}
+.section-title-wrap h2 {
+  font-family: var(--display);
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.section-title-wrap p {
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+/* ── CARDS ── */
+.card-grid { display: grid; gap: 14px; }
+.card-grid.cols-3 { grid-template-columns: repeat(3,1fr); }
+.card-grid.cols-2 { grid-template-columns: repeat(2,1fr); }
+
+.card {
+  background: var(--bg2);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px;
+  transition: all 0.22s;
+  position: relative;
+  overflow: hidden;
+}
+.card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--card-accent, var(--lavender));
+  border-radius: 0 0 var(--radius) var(--radius);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.card:hover { box-shadow: var(--shadow-lg); transform: translateY(-3px); border-color: transparent; }
+.card:hover::after { opacity: 1; }
+
+.card-icon {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  margin-bottom: 14px;
+  background: var(--bg3);
+}
+.card h3 {
+  font-family: var(--display);
+  font-size: 16px;
+  font-weight: 800;
+  margin-bottom: 7px;
+  color: var(--text);
+}
+.card p { color: var(--muted); font-size: 13px; line-height: 1.75; }
+
+/* Badges */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-family: var(--mono); font-size: 10px;
+  padding: 4px 11px; border-radius: 100px; margin-top: 12px;
+  font-weight: 600; letter-spacing: 0.5px;
+}
+.badge.high   { background: #E6FBF4; color: var(--mint);    border: 1.5px solid #B2F0DC; }
+.badge.medium { background: #FFF4E0; color: var(--yellow);  border: 1.5px solid #FFD97A; }
+.badge.low    { background: #FFE8E8; color: var(--coral);   border: 1.5px solid #FFBDBD; }
+
+/* ── CODE BLOCK ── */
+.code-wrap { position: relative; margin: 18px 0; }
+.code-block {
+  background: #F5F3FF;
+  border: 2px solid #E4E0F5;
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.85;
+  overflow-x: auto;
+  color: #3D3460;
+  white-space: pre;
+}
+.code-block .cm  { color: var(--muted); font-style: italic; }
+.code-block .kw  { color: var(--lavender); font-weight: 600; }
+.code-block .st  { color: var(--mint); }
+.code-block .hl  { color: var(--sky); }
+.code-block .ans { color: var(--coral); font-weight: 600; }
+
+.code-label {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--mono); font-size: 10px;
+  color: var(--muted); text-transform: uppercase;
+  letter-spacing: 2px; margin-bottom: 6px;
+}
+.code-label::before {
+  content: '';
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--lavender);
+  flex-shrink: 0;
+}
+
+.copy-btn {
+  position: absolute; top: 10px; right: 10px;
+  background: var(--bg2);
+  border: 2px solid var(--border);
+  color: var(--muted);
+  font-family: var(--mono); font-size: 11px;
+  padding: 5px 13px; border-radius: 8px;
+  cursor: pointer; transition: all 0.2s;
+  font-weight: 600;
+}
+.copy-btn:hover { background: var(--lavender); color: #fff; border-color: var(--lavender); }
+.copy-btn.copied { background: var(--mint); color: #fff; border-color: var(--mint); }
+
+/* ── TABS ── */
+.tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+.tab {
+  font-family: var(--display); font-size: 13px; font-weight: 700;
+  padding: 8px 18px; border-radius: 100px;
+  border: 2px solid var(--border);
+  background: var(--bg2); color: var(--muted);
+  cursor: pointer; transition: all 0.2s;
+}
+.tab:hover { border-color: var(--lavender); color: var(--lavender); }
+.tab.active {
+  background: var(--lavender); border-color: var(--lavender);
+  color: #fff; box-shadow: 0 4px 12px rgba(132,94,247,0.3);
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ── COMPARISON TABLE ── */
+.comp-table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 16px 0; border-radius: var(--radius); overflow: hidden; border: 2px solid var(--border); }
+.comp-table th {
+  background: linear-gradient(135deg, #EDE8FF, #E8F4FF);
+  padding: 12px 16px; text-align: left;
+  font-family: var(--display); font-size: 12px; font-weight: 800;
+  color: var(--lavender); letter-spacing: 0.5px;
+}
+.comp-table td { padding: 11px 16px; border-bottom: 1.5px solid var(--border); color: var(--text); }
+.comp-table tr:last-child td { border-bottom: none; }
+.comp-table tr:hover td { background: #FAF8FF; }
+
+/* ── PRIORITY BLOCK ── */
+.priority-block { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+.priority-item {
+  display: flex; align-items: flex-start; gap: 14px;
+  background: var(--bg2); border: 2px solid var(--border);
+  border-radius: var(--radius); padding: 16px 20px;
+}
+.priority-dot {
+  width: 12px; height: 12px; border-radius: 50%; margin-top: 4px; flex-shrink: 0;
+}
+.priority-item.red    { border-left: 4px solid var(--coral);   }
+.priority-item.yellow { border-left: 4px solid var(--yellow);  }
+.priority-item.green  { border-left: 4px solid var(--mint);    }
+.priority-item.red    .priority-dot { background: var(--coral);  box-shadow: 0 0 8px rgba(255,107,107,0.4); }
+.priority-item.yellow .priority-dot { background: var(--yellow); box-shadow: 0 0 8px rgba(250,176,5,0.4); }
+.priority-item.green  .priority-dot { background: var(--mint);   box-shadow: 0 0 8px rgba(56,217,169,0.4); }
+.pri-label { font-family: var(--display); font-size: 13px; font-weight: 800; margin-bottom: 5px; }
+.priority-item.red    .pri-label { color: var(--coral); }
+.priority-item.yellow .pri-label { color: #E8A500; }
+.priority-item.green  .pri-label { color: var(--mint); }
+.pri-items span { display: block; color: var(--muted); font-size: 13px; }
+
+/* ── TONE CHIPS ── */
+.tone-grid { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+.tone-chip {
+  padding: 8px 18px; border-radius: 100px;
+  font-size: 13px; font-weight: 600; font-family: var(--display);
+  border: 2px solid var(--border); background: var(--bg2);
+  cursor: pointer; transition: all 0.18s; color: var(--text);
+}
+.tone-chip:hover { border-color: var(--pink); color: var(--pink); background: #FFF0F6; }
+.tone-chip.active { background: var(--pink); border-color: var(--pink); color: #fff; box-shadow: 0 4px 12px rgba(247,131,172,0.35); }
+
+/* ── TONE PREVIEW BEFORE/AFTER ── */
+.tone-preview-wrap {
+  display: grid;
+  grid-template-columns: 1fr 36px 1fr;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.tone-box {
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  border: 2px solid var(--border);
+  min-height: 90px;
+}
+.tone-box.original { background: var(--bg3); }
+.tone-box.result   { background: #FFF0FA; border-color: #F8C4DE; }
+.tone-box-label {
+  font-family: var(--display); font-size: 11px; font-weight: 800;
+  letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px;
+}
+.tone-box.original .tone-box-label { color: var(--muted); }
+.tone-box.result   .tone-box-label { color: var(--pink); }
+.tone-box-text { font-size: 13.5px; line-height: 1.8; }
+.tone-box.original .tone-box-text { color: var(--muted); }
+.tone-box.result   .tone-box-text { color: var(--text); font-weight: 500; }
+.tone-arrow {
+  font-size: 22px; text-align: center;
+  background: var(--lavender); color: #fff;
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 12px rgba(132,94,247,0.3);
+  margin: 0 auto;
+}
+
+/* ── STEP LIST ── */
+.step-list { display: flex; flex-direction: column; }
+.step-item {
+  display: flex; gap: 18px;
+  padding: 22px 0;
+  border-bottom: 1.5px dashed var(--border);
+}
+.step-item:last-child { border-bottom: none; }
+.step-left { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; }
+.step-num {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--lavender), var(--sky));
+  color: #fff; font-family: var(--display);
+  font-size: 14px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; box-shadow: 0 4px 12px rgba(132,94,247,0.3);
+}
+.step-line {
+  width: 2px; flex: 1; border-radius: 1px;
+  background: linear-gradient(to bottom, var(--lavender), transparent);
+  margin-top: 8px;
+}
+.step-item:last-child .step-line { display: none; }
+.step-content h4 { font-family: var(--display); font-weight: 800; font-size: 15px; color: var(--text); margin-bottom: 5px; }
+.step-content p  { color: var(--muted); font-size: 13px; }
+.step-meta { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.step-meta-item {
+  font-family: var(--mono); font-size: 11px; font-weight: 600;
+  background: var(--bg3); color: var(--muted);
+  padding: 4px 10px; border-radius: 6px; border: 1.5px solid var(--border);
+}
+
+/* ── PERSONA CARDS ── */
+.persona-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+.persona-card {
+  background: var(--bg2); border: 2px solid var(--border);
+  border-radius: var(--radius); padding: 24px;
+  text-align: center; transition: all 0.22s;
+}
+.persona-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-3px); border-color: var(--lavender); }
+.persona-avatar {
+  width: 58px; height: 58px; border-radius: 50%;
+  margin: 0 auto 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+  background: linear-gradient(135deg, #EDE8FF, #E8F4FF);
+  border: 2px solid var(--border);
+}
+.persona-card h4 { font-family: var(--display); font-weight: 800; font-size: 15px; margin-bottom: 4px; }
+.persona-card .role { font-family: var(--mono); font-size: 11px; color: var(--lavender); margin-bottom: 10px; font-weight: 600; }
+.persona-card p  { color: var(--muted); font-size: 12.5px; line-height: 1.65; }
+
+/* ── CALLOUT ── */
+.callout {
+  border-radius: var(--radius); padding: 15px 18px;
+  margin: 14px 0; display: flex; gap: 12px; align-items: flex-start;
+  font-size: 13.5px; border: 2px solid;
+}
+.callout.info  { background: #EEF5FF; border-color: #C5DCFF; }
+.callout.warn  { background: #FFF9E6; border-color: #FFE08A; }
+.callout.tip   { background: #EDFBF6; border-color: #B2EDD8; }
+.callout .icon { font-size: 17px; flex-shrink: 0; margin-top: 1px; }
+.callout span  { color: var(--text); line-height: 1.75; }
+.callout.info span  { color: #1971C2; }
+.callout.warn span  { color: #946200; }
+.callout.tip  span  { color: #0CA678; }
+
+/* ── CHECKLIST ── */
+.checklist { list-style: none; margin: 14px 0; }
+.checklist li {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 9px 0; border-bottom: 1.5px solid var(--border);
+  color: var(--muted); font-size: 13.5px;
+}
+.checklist li:last-child { border-bottom: none; }
+.checklist li::before {
+  content: '☐';
+  color: var(--lavender); font-size: 16px;
+  flex-shrink: 0; margin-top: -1px;
+}
+
+/* ── DIVIDER ── */
+.divider { height: 2px; background: var(--border); margin: 24px 0; border-radius: 1px; }
+
+/* ── FOOTER ── */
+footer {
+  padding: 44px 64px; text-align: center;
+  color: var(--muted); font-size: 13px;
+  border-top: 2px solid var(--border);
+  background: var(--bg2);
+}
+
+/* ── MOBILE TOGGLE ── */
+.menu-toggle {
+  display: none;
+  position: fixed; top: 14px; left: 14px; z-index: 200;
+  background: var(--bg2); border: 2px solid var(--border);
+  color: var(--text); width: 40px; height: 40px;
+  border-radius: 10px; cursor: pointer;
+  align-items: center; justify-content: center;
+  font-size: 18px; box-shadow: var(--shadow);
+}
+
+@media (max-width: 900px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; }
+  .menu-toggle { display: flex; }
+  .hero { padding: 56px 24px 36px; }
+  .hero h1 { font-size: 34px; }
+  .section { padding: 40px 22px; }
+  .card-grid.cols-3, .card-grid.cols-2 { grid-template-columns: 1fr; }
+  .persona-grid { grid-template-columns: 1fr; }
+  .tone-preview-wrap { grid-template-columns: 1fr; }
+  .tone-arrow { transform: rotate(90deg); }
+}
+</style>
+</head>
+<body>
+
+<button class="menu-toggle" onclick="toggleMenu()">☰</button>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-tag">Prompt Engineering</div>
+    <h1>AI 대화의<br><span>기술</span> 완전 정복</h1>
+  </div>
+  <span class="nav-section-label">기초 패턴</span>
+  <a class="nav-item" href="#sec1"><span class="nav-num">01</span>프롬프트 3가지 유형</a>
+  <a class="nav-item" href="#sec2"><span class="nav-num">02</span>제로샷·원샷·퓨샷</a>
+  <a class="nav-item" href="#sec3"><span class="nav-num">03</span>페르소나 패턴</a>
+  <span class="nav-section-label">구조화</span>
+  <a class="nav-item" href="#sec4"><span class="nav-num">04</span>마크다운 구조화</a>
+  <a class="nav-item" href="#sec5"><span class="nav-num">05</span>표현 강도 · 우선순위</a>
+  <a class="nav-item" href="#sec6"><span class="nav-num">06</span>톤(말투) 지정</a>
+  <span class="nav-section-label">고급 패턴</span>
+  <a class="nav-item" href="#sec7"><span class="nav-num">07</span>대안 접근법</a>
+  <a class="nav-item" href="#sec8"><span class="nav-num">08</span>이용자 페르소나</a>
+  <a class="nav-item" href="#sec9"><span class="nav-num">09</span>레시피 패턴</a>
+  <a class="nav-item" href="#sec10"><span class="nav-num">10</span>뒤집힌 상호작용</a>
+  <a class="nav-item" href="#sec11"><span class="nav-num">11</span>인지 검증자</a>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-tag">11가지 핵심 패턴</div>
+    <h1>AI와 대화하는<br><span class="hl-coral">기술</span>의<br><span class="hl-lavender">모든 것</span></h1>
+    <p>실무에서 바로 쓸 수 있는 프롬프트 패턴을 한눈에 정리했어요.<br>예시와 함께 하나씩 익혀보세요 ✨</p>
+    <div class="hero-pills">
+      <div class="hero-pill"><span class="dot" style="background:var(--lavender)"></span>11가지 핵심 패턴</div>
+      <div class="hero-pill"><span class="dot" style="background:var(--coral)"></span>30+ 실전 예시</div>
+      <div class="hero-pill"><span class="dot" style="background:var(--mint)"></span>복사 가능한 템플릿</div>
+    </div>
+  </section>
+
+  <!-- ── SEC 1: 3가지 유형 ── -->
+  <section class="section" id="sec1">
+    <div class="section-header">
+      <div class="section-num">01</div>
+      <div class="section-title-wrap">
+        <h2>프롬프트의 3가지 유형</h2>
+        <p>목적에 따라 맞는 유형을 선택하면 응답 품질이 확 달라져요</p>
+      </div>
+    </div>
+    <div class="card-grid cols-3">
+      <div class="card" style="--card-accent:var(--coral)">
+        <div class="card-icon">📖</div>
+        <h3>서술형 — 맥락</h3>
+        <p>배경과 상황을 설명해서 AI가 문맥을 이해하도록 유도해요. 자유도가 높아 다양한 상황에 유연하게 쓸 수 있어요.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <span class="badge low">재사용 ↓</span>
+          <span class="badge high">유연성 ↑</span>
+        </div>
+      </div>
+      <div class="card" style="--card-accent:var(--lavender)">
+        <div class="card-icon">📋</div>
+        <h3>지침형 — 규칙</h3>
+        <p>단계별 절차와 규칙을 명확히 제시해서 원하는 출력을 유도해요. 코드 작성·문서 생성에 딱 맞아요.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <span class="badge medium">재사용 ●</span>
+          <span class="badge medium">유연성 ●</span>
+        </div>
+      </div>
+      <div class="card" style="--card-accent:var(--mint)">
+        <div class="card-icon">⚙️</div>
+        <h3>함수형 — 구조</h3>
+        <p>입력·처리·출력을 명확히 정의해서 일관된 결과를 만들어요. 반복 업무 자동화에 최적이에요.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <span class="badge high">재사용 ↑</span>
+          <span class="badge low">유연성 ↓</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:28px">
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab(this,'t1','ex-narrative')">📖 서술형 예시</button>
+        <button class="tab" onclick="switchTab(this,'t1','ex-instructive')">📋 지침형 예시</button>
+        <button class="tab" onclick="switchTab(this,'t1','ex-functional')">⚙️ 함수형 예시</button>
+      </div>
+      <div id="ex-narrative" class="tab-content active">
+        <div class="code-label">서술형 프롬프트</div>
+        <div class="code-wrap">
+          <div class="code-block"><span class="kw">당신은 10년 경력의 무역 전문가입니다.</span>
+중소기업 수출 담당자가 HS code를 처음 배우는 상황입니다.
+<span class="st">이 사람에게 HS code의 개념과 중요성을 설명해주세요.</span></div>
+          <button class="copy-btn" onclick="copyCode(this)">복사</button>
+        </div>
+      </div>
+      <div id="ex-instructive" class="tab-content">
+        <div class="code-label">지침형 프롬프트</div>
+        <div class="code-wrap">
+          <div class="code-block"><span class="kw">다음 규칙에 따라 Python 코드를 작성하세요.</span>
+
+<span class="hl">1. 함수명은 snake_case로 작성</span>
+<span class="hl">2. 각 함수에 docstring을 포함</span>
+<span class="hl">3. 예외 처리 반드시 포함 (try, except)</span>
+<span class="hl">4. 결과는 JSON 형식으로 반환</span></div>
+          <button class="copy-btn" onclick="copyCode(this)">복사</button>
+        </div>
+      </div>
+      <div id="ex-functional" class="tab-content">
+        <div class="code-label">함수형 프롬프트</div>
+        <div class="code-wrap">
+          <div class="code-block"><span class="kw">입력:</span> {product_name}, {hs_code}, {country}
+<span class="kw">처리:</span> 해당 국가의 관세율 및 수입 규제 조회
+<span class="kw">출력:</span>
+{
+  <span class="st">"관세율"</span>: "",
+  <span class="st">"규제사항"</span>: [],
+  <span class="st">"필요서류"</span>: []
+}</div>
+          <button class="copy-btn" onclick="copyCode(this)">복사</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SEC 2: SHOT ── -->
+  <section class="section" id="sec2">
+    <div class="section-header">
+      <div class="section-num">02</div>
+      <div class="section-title-wrap">
+        <h2>제로샷 · 원샷 · 퓨샷 프롬프팅</h2>
+        <p>예시 수에 따라 AI의 출력 정확도가 크게 달라져요</p>
+      </div>
+    </div>
+    <div class="card-grid cols-3">
+      <div class="card" style="--card-accent:var(--sky)">
+        <div class="card-icon">⚡</div>
+        <h3>제로샷 (Zero-shot)</h3>
+        <p>예시 없이 바로 지시해요. 간단한 요청이나 AI의 기본 지식으로 충분한 경우에 사용해요.</p>
+      </div>
+      <div class="card" style="--card-accent:var(--yellow)">
+        <div class="card-icon">🎯</div>
+        <h3>원샷 (One-shot)</h3>
+        <p>예시 1개를 제공해요. 출력 형식을 구체적으로 보여줘야 할 때 효과적이에요.</p>
+      </div>
+      <div class="card" style="--card-accent:var(--mint)">
+        <div class="card-icon">🎓</div>
+        <h3>퓨샷 (Few-shot)</h3>
+        <p>예시 2개 이상을 제공해요. 패턴 학습이 필요하거나 일관성 있는 출력이 필요할 때 써요.</p>
+      </div>
+    </div>
+
+    <div style="margin-top:28px">
+      <div class="code-label">퓨샷 실전 예시 — HS Code 분류</div>
+      <div class="code-wrap">
+        <div class="code-block"><span class="kw">HS code를 분류해주세요</span>
+
+<span class="hl">예시) 품목: "면으로 만든 남성용 티셔츠"     → 6109.10</span>
+<span class="hl">예시) 품목: "폴리에스테르 소재 여성 블라우스" → 6206.40</span>
+<span class="hl">예시) 품목: "아동용 데님 바지"              → 6203.42</span>
+
+품목: <span class="st">"울 혼방 남성 재킷"</span> → <span class="ans">6203.31</span>
+
+<span class="cm">※ 6203.31 = 울·동물 세모 소재 남성용 재킷</span></div>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <div class="callout info">
+        <span class="icon">💡</span>
+        <span>예시가 많을수록 정확도는 올라가지만, 너무 많으면 오히려 혼란을 줄 수 있어요. 보통 <strong>3~5개</strong>가 최적이에요!</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SEC 3: PERSONA ── -->
+  <section class="section" id="sec3">
+    <div class="section-header">
+      <div class="section-num">03</div>
+      <div class="section-title-wrap">
+        <h2>페르소나 패턴</h2>
+        <p>AI의 역할을 좁혀서 전문적이고 일관된 관점의 답변을 이끌어내요</p>
+      </div>
+    </div>
+    <div class="callout warn">
+      <span class="icon">⚠️</span>
+      <span>같은 질문이라도 페르소나에 따라 완전히 다른 응답이 나와요. 목적에 맞는 전문가를 설정해주세요!</span>
+    </div>
+
+    <div style="margin-top:22px;margin-bottom:14px">
+      <p style="font-family:var(--display);font-weight:800;font-size:14px;color:var(--text);margin-bottom:12px">좋은 페르소나의 4가지 구성 요소</p>
+      <div class="code-wrap">
+        <div class="code-block"><span class="st">"당신은 [역할]입니다.</span>
+<span class="hl">[경력/배경]을 가지고 있으며,</span>
+<span class="kw">[전문 분야]에 특화되어 있습니다.</span>
+<span class="cm">[말투/태도]로 응답하세요."</span></div>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+    </div>
+
+    <div class="persona-grid" style="margin:24px 0">
+      <div class="persona-card">
+        <div class="persona-avatar">⚖️</div>
+        <h4>관세사 페르소나</h4>
+        <div class="role">무역 · 관세 전문</div>
+        <p>20년 경력, FTA 협정세율과 원산지 규정 전문가. 복잡한 내용을 쉽고 실용적으로 설명해요.</p>
+      </div>
+      <div class="persona-card">
+        <div class="persona-avatar">💻</div>
+        <h4>개발자 페르소나</h4>
+        <div class="role">코드 리뷰 전문</div>
+        <p>까다로운 리뷰어. 성능·보안·가독성을 엄격하게 평가하며 개선점을 먼저 지적하는 스타일이에요.</p>
+      </div>
+      <div class="persona-card">
+        <div class="persona-avatar">🎓</div>
+        <h4>상담사 페르소나</h4>
+        <div class="role">진로 · 취업 전문</div>
+        <p>공감 중심 상담. 상대방 상황을 충분히 이해하고 맞춤형 조언을 제공하는 스타일이에요.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <p style="font-family:var(--display);font-weight:800;font-size:15px;margin-bottom:14px">멀티 페르소나 — 여러 관점 동시에 분석하기</p>
+    <div class="code-wrap">
+      <div class="code-block"><span class="kw">다음 3명의 전문가 입장에서 동남아 수출 전략을 분석해주세요.</span>
+
+<span class="st">- 김부장</span>: 영업 15년, 낙관적, 현장 중심
+<span class="st">- 이박사</span>: 시장조사 전문, 데이터 중심, 신중함
+<span class="st">- 박대표</span>: 스타트업 창업가, 속도 중시, 리스크 감수
+
+각자의 관점에서 <span class="hl">찬반 의견</span>을 제시하세요.</div>
+      <button class="copy-btn" onclick="copyCode(this)">복사</button>
+    </div>
+  </section>
+
+  <!-- ── SEC 4: MARKDOWN ── -->
+  <section class="section" id="sec4">
+    <div class="section-header">
+      <div class="section-num">04</div>
+      <div class="section-title-wrap">
+        <h2>마크다운 구조화 프롬프트</h2>
+        <p>역할·조건·출력 형태를 명확히 구분해서 AI 응답 품질을 높여요</p>
+      </div>
+    </div>
+    <div class="card-grid cols-2" style="margin-bottom:24px">
+      <div class="card" style="--card-accent:var(--lavender)">
+        <div class="card-icon">#</div>
+        <h3><code style="font-family:var(--mono);font-size:13px;color:var(--lavender)"># 헤더</code> — 뼈대</h3>
+        <p>역할·작업·출력 형식을 섹션으로 명확히 구분해요.</p>
+      </div>
+      <div class="card" style="--card-accent:var(--mint)">
+        <div class="card-icon">```</div>
+        <h3><code style="font-family:var(--mono);font-size:13px;color:var(--mint)">``` 코드블록</code> — 격리</h3>
+        <p>지시문과 입력 데이터를 혼동하지 않도록 분리해요.</p>
+      </div>
+      <div class="card" style="--card-accent:var(--coral)">
+        <div class="card-icon">&gt;</div>
+        <h3><code style="font-family:var(--mono);font-size:13px;color:var(--coral)">&gt; 인용문</code> — 핵심 강조</h3>
+        <p>절대 지켜야 할 조건을 눈에 띄게 부각시켜요.</p>
+      </div>
+      <div class="card" style="--card-accent:var(--yellow)">
+        <div class="card-icon">|</div>
+        <h3><code style="font-family:var(--mono);font-size:13px;color:var(--yellow)">| 표</code> — 입출력 구조</h3>
+        <p>입출력 예시를 표로 제공해서 패턴을 학습시켜요.</p>
+      </div>
+    </div>
+
+    <p style="font-family:var(--display);font-weight:800;font-size:14px;color:var(--text);margin-bottom:12px">완성 예시 — FTA 분석 프롬프트</p>
+    <div class="code-wrap">
+      <div class="code-block"><span class="kw"># 역할</span>
+당신은 중소기업 수출 컨설턴트입니다. FTA 활용과 원산지 증명 전문가입니다.
+
+<span class="kw"># 작업</span>
+아래 수출 품목에 대한 FTA 적용 가능 여부를 분석하세요.
+
+<span class="kw"># 입력</span>
+<span class="hl">```</span>
+품목명: 스테인리스 주방용품
+수출국: 한국
+수입국: 베트남
+<span class="hl">```</span>
+
+<span class="kw"># 분석 기준</span>
+- 한-아세안 FTA 협정세율 적용 여부
+- 원산지 결정 기준 충족 여부
+- 필요 서류 목록
+
+<span class="kw"># 제약 조건</span>
+<span class="ans">&gt; 불확실한 세율은 반드시 "세관 확인 필요"로 표기</span>
+
+<span class="kw"># 출력 형식</span>
+<span class="hl">```json</span>
+{
+  <span class="st">"FTA_적용"</span>: true/false,
+  <span class="st">"협정세율"</span>: "",
+  <span class="st">"일반세율"</span>: "",
+  <span class="st">"필요서류"</span>: []
+}
+<span class="hl">```</span></div>
+      <button class="copy-btn" onclick="copyCode(this)">복사</button>
+    </div>
+  </section>
+
+  <!-- ── SEC 5: PRIORITY ── -->
+  <section class="section" id="sec5">
+    <div class="section-header">
+      <div class="section-num">05</div>
+      <div class="section-title-wrap">
+        <h2>표현 강도 &amp; 우선순위 설정</h2>
+        <p>지시의 강도와 중요도를 명확히 구분해서 AI가 올바른 순서로 행동하게 해요</p>
+      </div>
+    </div>
+
+    <p style="font-family:var(--display);font-weight:800;font-size:14px;color:var(--text);margin-bottom:12px">강도 단계별 표현</p>
+    <table class="comp-table">
+      <thead><tr><th>단계</th><th>키워드</th><th>예시</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge high" style="margin-top:0">1단계 — 권장</span></td><td>가능하면, 되도록</td><td>가능하면 한국어로 답변해주세요</td></tr>
+        <tr><td><span class="badge medium" style="margin-top:0">2단계 — 일반</span></td><td>~하세요, ~해주세요</td><td>한국어로 답변해주세요</td></tr>
+        <tr><td><span class="badge low" style="margin-top:0;background:#FFF4E0;color:var(--yellow);border-color:#FFE08A">3단계 — 강조</span></td><td>반드시, 꼭, 항상</td><td>반드시 한국어로 답변하세요</td></tr>
+        <tr><td><span class="badge low" style="margin-top:0">4단계 — 절대</span></td><td>절대로, 어떤 경우에도</td><td>어떤 경우에도 영어를 사용하지 마세요</td></tr>
+      </tbody>
+    </table>
+
+    <div class="divider"></div>
+    <p style="font-family:var(--display);font-weight:800;font-size:14px;color:var(--text);margin-bottom:12px">제약 조건 우선순위 구조</p>
+    <div class="priority-block">
+      <div class="priority-item red">
+        <div class="priority-dot"></div>
+        <div>
+          <div class="pri-label">🔴 최우선 (절대조건)</div>
+          <div class="pri-items">
+            <span>• 개인 정보 절대 출력하지 않기</span>
+            <span>• 사실과 다른 내용을 생성하지 않기</span>
+          </div>
+        </div>
+      </div>
+      <div class="priority-item yellow">
+        <div class="priority-dot"></div>
+        <div>
+          <div class="pri-label">🟡 중요 (일반조건)</div>
+          <div class="pri-items">
+            <span>• 답변은 500자 이내로 작성</span>
+            <span>• 전문 용어 사용 시 괄호 안에 설명 추가</span>
+          </div>
+        </div>
+      </div>
+      <div class="priority-item green">
+        <div class="priority-dot"></div>
+        <div>
+          <div class="pri-label">🟢 선택 (권장조건)</div>
+          <div class="pri-items">
+            <span>• 가능하면 실제 사례 포함</span>
+            <span>• 표나 목록을 활용하면 더 좋아요</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SEC 6: TONE ── -->
+  <section class="section" id="sec6">
+    <div class="section-header">
+      <div class="section-num">06</div>
+      <div class="section-title-wrap">
+        <h2>톤(말투) 지정</h2>
+        <p>같은 내용도 톤에 따라 전혀 다른 글이 돼요 — 클릭해서 바로 확인해보세요!</p>
+      </div>
+    </div>
+
+    <div class="tone-grid">
+      <button class="tone-chip" onclick="selectTone(this,'humorous')">😄 유머러스</button>
+      <button class="tone-chip" onclick="selectTone(this,'emotional')">💗 감정적</button>
+      <button class="tone-chip" onclick="selectTone(this,'warm')">🌿 따뜻한</button>
+      <button class="tone-chip" onclick="selectTone(this,'ironic')">😏 아이러니</button>
+      <button class="tone-chip" onclick="selectTone(this,'romantic')">🌹 로맨틱</button>
+      <button class="tone-chip" onclick="selectTone(this,'formal')">📊 공식적</button>
+      <button class="tone-chip" onclick="selectTone(this,'technical')">⚙️ 기술적</button>
+      <button class="tone-chip" onclick="selectTone(this,'friendly')">👋 친근한</button>
+    </div>
+
+    <div id="tone-preview" style="display:none;margin-top:20px">
+      <div class="tone-preview-wrap">
+        <div class="tone-box original">
+          <div class="tone-box-label">원본 텍스트</div>
+          <div class="tone-box-text">올해 들어 회사는 큰 변화를 맞이했습니다. 이제 새로운 전략과 목표를 설정하고, 모든 직원이 함께 나아가려고 합니다.</div>
+        </div>
+        <div class="tone-arrow">→</div>
+        <div class="tone-box result">
+          <div class="tone-box-label" id="tone-result-label">변환 결과</div>
+          <div class="tone-box-text" id="tone-result-text">톤을 선택하면 여기에 변환 예시가 표시돼요!</div>
+        </div>
+      </div>
+      <div class="code-label" id="tone-preview-label"></div>
+      <div class="code-wrap">
+        <div class="code-block" id="tone-preview-code"></div>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <p style="font-family:var(--display);font-weight:800;font-size:14px;color:var(--text);margin-bottom:12px">보고서 섹션별 톤 구분</p>
+    <table class="comp-table">
+      <thead><tr><th>섹션</th><th>대상</th><th>톤</th></tr></thead>
+      <tbody>
+        <tr><td><strong>요약</strong></td><td>임원 보고용</td><td>3줄 이내, 숫자 중심, 공식적</td></tr>
+        <tr><td><strong>본문</strong></td><td>실무자용</td><td>단계별 설명, 기술적·구체적</td></tr>
+        <tr><td><strong>결론</strong></td><td>전체 독자용</td><td>행동 유도, 긍정적·적극적</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ── SEC 7: ALTERNATIVES ── -->
+  <section class="section" id="sec7">
+    <div class="section-header">
+      <div class="section-num">07</div>
+      <div class="section-title-wrap">
+        <h2>대안 접근법 패턴</h2>
+        <p>선택권을 AI가 아닌 사람에게 돌려주는 방법이에요</p>
+      </div>
+    </div>
+    <div class="callout tip">
+      <span class="icon">✅</span>
+      <span>일반 질문 → AI가 임의로 하나 선택 / <strong>대안 패턴</strong> → 모든 방법을 나열·비교해서 선택권이 사람에게 돌아와요!</span>
+    </div>
+
+    <div style="margin-top:24px">
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab(this,'t7','alt1')">① 단순 나열형</button>
+        <button class="tab" onclick="switchTab(this,'t7','alt2')">② 비교형</button>
+        <button class="tab" onclick="switchTab(this,'t7','alt3')">③ 분기형</button>
+        <button class="tab" onclick="switchTab(this,'t7','alt4')">④ 역발상형</button>
+      </div>
+      <div id="alt1" class="tab-content active">
+        <div class="code-label">단순 나열형 — 해결책 목록 요청</div>
+        <div class="code-wrap">
+          <div class="code-block"><span class="kw"># 지시</span>
+아래 문제를 해결하는 방법을 최소 4가지 제시하세요.
+
+<span class="hl">## 방법 {번호}: {이름}</span>
+- 핵심원리: {한 줄}
+- 적합한 상황: {언제 쓰면 좋은가}
+- 단점: {주의할 점}
+- 난이도: {초급/중급/고급}
+
+<span class="kw"># 문제</span>
+<span class="st">수출 통관 서류를 자동으로 생성하고 싶습니다</span></div>
+          <button class="copy-btn" onclick="copyCode(this)">복사</button>
+        </div>
+      </div>
+      <div id="alt2" class="tab-content">
+        <div class="code-label">축 기반 비교형 — 다각도 평가</div>
+        <div class="code-wrap">
+          <div class="code-block"><span class="kw">아래 항목들을 다음 기준으로 비교 분석하세요.</span>
+
+<span class="hl">평가 기준:</span>
+- 개발 속도 (빠름/보통/느림)
+- 유지보수 난이도 (쉬움/보통/어려움)
+- 비용 (무료/저비용/고비용)
+- 확장성 (높음/보통/낮음)
+
+<span class="hl">비교 대상:</span> FastAPI, Django, Flask, Node.js Express
+<span class="hl">용도:</span> 무역 데이터 처리 REST API 서버</div>
+          <button class="copy-btn" onclick="copyCode(this)">복사</button>
+        </div>
+      </div>
+      <div id="alt3" class="tab-content">
+        <div class="code-label">상황별 분기형 — 시나리오 맞춤 추천</div>
+        <div class="code-wrap">
+          <div class="code-block"><span class="kw">아래 상황별 가장 적합한 DB를 추천하세요. 각 상황은 독립적으로 판단하세요.</span>
+
+<span class="st">상황 A:</span> 스타트업, 개발자 1명, 빠른 MVP
+<span class="st">상황 B:</span> 무역 데이터 10년치, 복잡한 통계 쿼리
+<span class="st">상황 C:</span> 실시간 환율·가격, 초당 1000건 업데이트
+<span class="st">상황 D:</span> 비정형 통관 문서 저장
+
+각 상황에 대해:
+<span class="hl">1순위 추천: {DB명} - {이유 한 줄}</span>
+<span class="hl">2순위 추천: {DB명} - {이유 한 줄}</span></div>
+          <button class="copy-btn" onclick="copyCode(this)">복사</button>
+        </div>
+      </div>
+      <div id="alt4" class="tab-content">
+        <div class="code-label">역발상 대안형 — 문제 재정의 포함</div>
+        <div class="code-wrap">
+          <div class="code-block"><span class="kw">아래 문제에 대해</span>
+<span class="hl">① 일반적인 해결책</span>
+<span class="hl">② "하지 않는" 선택지</span>
+<span class="hl">③ "문제 자체를 재정의"하는 방법</span>
+을 포함해서 총 5가지 대안을 제시하세요.
+
+<span class="st">문제: 수입 통관 처리 시간이 너무 오래 걸린다</span></div>
+          <button class="copy-btn" onclick="copyCode(this)">복사</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SEC 8: USER PERSONA ── -->
+  <section class="section" id="sec8">
+    <div class="section-header">
+      <div class="section-num">08</div>
+      <div class="section-title-wrap">
+        <h2>이용자 페르소나 패턴</h2>
+        <p>답변을 받는 사람의 특성을 정의해서 맞춤형 응답을 이끌어내요</p>
+      </div>
+    </div>
+    <div class="card-grid cols-2" style="margin-bottom:24px">
+      <div class="card" style="--card-accent:var(--lavender)">
+        <h3>페르소나 패턴</h3>
+        <p>→ <strong>AI의 역할</strong>을 정의<br><span style="color:var(--muted)">"당신은 관세사입니다..."</span></p>
+      </div>
+      <div class="card" style="--card-accent:var(--mint)">
+        <h3>이용자 페르소나 패턴</h3>
+        <p>→ <strong>답변을 듣는 사람</strong>을 정의<br><span style="color:var(--muted)">"이 답을 듣는 사람은 ○○입니다..."</span></p>
+      </div>
+    </div>
+    <div class="code-label">실전 이용자 페르소나 프롬프트</div>
+    <div class="code-wrap">
+      <div class="code-block"><span class="kw"># 이용자 정보</span>
+- 직책: <span class="st">중소기업 대표 (제조업, 직원 30명)</span>
+- 수출경험: <span class="st">국내 영업만 10년, 해외 수출 처음</span>
+- 관심사: <span class="hl">리스크 최소화, 빠른 실행</span>
+- 우려: <span class="ans">"복잡하고 어려울 것 같다"는 막연한 두려움</span>
+- 시간: 바빠서 긴 글을 읽지 않음
+
+<span class="kw"># 지시</span>
+위의 이용자에게 첫 수출 준비 3단계를 설명하세요.
+전문 용어는 최소화하고, 각 단계는 3줄 이내로 작성하세요.</div>
+      <button class="copy-btn" onclick="copyCode(this)">복사</button>
+    </div>
+
+    <div class="divider"></div>
+    <p style="font-family:var(--display);font-weight:800;font-size:14px;color:var(--text);margin-bottom:10px">이용자 페르소나 설계 체크리스트</p>
+    <ul class="checklist">
+      <li>이 사람의 직업과 역할은?</li>
+      <li>이 주제에 대한 사전 지식은 어느 정도인가?</li>
+      <li>이 정보로 무엇을 결정하거나 실행할 예정인가?</li>
+      <li>지금 어떤 상태인가? (급함 / 여유)</li>
+      <li>얼마나 긴 답변을 읽을 여유가 있는가?</li>
+      <li>가장 두려워하는 것은? 가장 원하는 것은?</li>
+      <li>절대 쓰면 안 되는 언어나 표현이 있나?</li>
+    </ul>
+  </section>
+
+  <!-- ── SEC 9: RECIPE ── -->
+  <section class="section" id="sec9">
+    <div class="section-header">
+      <div class="section-num">09</div>
+      <div class="section-title-wrap">
+        <h2>레시피 패턴</h2>
+        <p>목표 달성을 위한 단계별 순서와 분기를 명확히 요청해요</p>
+      </div>
+    </div>
+    <div class="callout info">
+      <span class="icon">📌</span>
+      <span>레시피 패턴은 <strong>순서 있는 행동 지침</strong>을 이끌어내요. "다음에 뭘 해야 하지?" 고민하는 시간을 줄여드려요!</span>
+    </div>
+    <div style="margin-top:22px">
+      <div class="code-label">레시피 패턴 — HS code 자동 분류 프로그램 만들기</div>
+      <div class="code-wrap">
+        <div class="code-block"><span class="kw"># 목표</span>
+Python 초보자가 무역 HS code 자동 분류 프로그램 만들기
+
+<span class="kw"># 현재 상태</span>
+- Python 설치만 되어 있음 / 프로그램 경험 없음 / 엑셀 품목 500개 보유
+
+<span class="kw"># 요청</span>
+단계별 레시피를 작성하세요. 각 단계는 아래 형식으로 작성하세요.
+
+<span class="hl">## STEP {번호}: {단계명}</span>
+- 할일: {구체적 행동}
+- 소요 시간: {예상 기간}
+- 완료 기준: {이것이 되면 다음으로}
+- 주의 사항: {흔한 실수}</div>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <p style="font-family:var(--display);font-weight:800;font-size:14px;color:var(--text);margin-bottom:14px">분기 포함 레시피 예시</p>
+    <div class="step-list">
+      <div class="step-item">
+        <div class="step-left"><div class="step-num">1</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <h4>클레임 접수 및 내용 확인</h4>
+          <p>바이어로부터 공식 클레임 문서를 수신하고 계약서 대조 검토</p>
+          <div class="step-meta">
+            <span class="step-meta-item">✅ 정상 → 다음 단계</span>
+            <span class="step-meta-item">❌ 이상 → 추가 자료 요청</span>
+          </div>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-left"><div class="step-num">2</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <h4>귀책 사유 분석</h4>
+          <p>당사·운송사·바이어 중 어느 쪽의 책임인지 판단</p>
+          <div class="step-meta">
+            <span class="step-meta-item">✅ 귀책 명확 → 보상 협상</span>
+            <span class="step-meta-item">❌ 불분명 → 중재 기관 활용</span>
+          </div>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-left"><div class="step-num">3</div></div>
+        <div class="step-content">
+          <h4>합의 및 클레임 종결</h4>
+          <p>합의서 작성·서명, 재발 방지 대책 수립 및 내부 보고</p>
+          <div class="step-meta">
+            <span class="step-meta-item">✅ 합의 완료 → 종결</span>
+            <span class="step-meta-item">❌ 결렬 → 법적 절차 검토</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SEC 10: INVERTED ── -->
+  <section class="section" id="sec10">
+    <div class="section-header">
+      <div class="section-num">10</div>
+      <div class="section-title-wrap">
+        <h2>뒤집힌 상호작용 패턴</h2>
+        <p>AI가 먼저 묻고, 충분한 정보가 모인 후에 결과물을 작성해요</p>
+      </div>
+    </div>
+    <div class="card-grid cols-2">
+      <div class="card" style="--card-accent:var(--lavender)">
+        <div class="card-icon">📝</div>
+        <h3>방법 1: 질문 먼저, 답은 나중</h3>
+        <p>필요한 정보를 한 번에 모두 질문한 뒤, 모든 답이 모이면 결과물을 작성해요.</p>
+      </div>
+      <div class="card" style="--card-accent:var(--mint)">
+        <div class="card-icon">💬</div>
+        <h3>방법 2: 한 번에 하나씩</h3>
+        <p>질문을 하나씩 순서대로 진행해요. 대화가 자연스럽고 답변 품질이 높아져요.</p>
+      </div>
+    </div>
+    <div style="margin-top:24px">
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab(this,'t10','inv1')">수출 제안서</button>
+        <button class="tab" onclick="switchTab(this,'t10','inv2')">Python 학습 계획</button>
+      </div>
+      <div id="inv1" class="tab-content active">
+        <div class="code-label">방법 1 — 정보 수집 후 작성</div>
+        <div class="code-wrap">
+          <div class="code-block"><span class="kw">수출 제안서를 작성해주세요.</span>
+<span class="ans">바로 작성하지 말고</span>, 먼저 아래 항목들을 질문해서
+제 답변을 모두 수집한 후 작성하세요.
+
+<span class="hl">수집이 필요한 정보:</span>
+- 제품 정보 / 타겟 바이어 / 핵심 강점 / 가격 정책 / 납기 조건</div>
+          <button class="copy-btn" onclick="copyCode(this)">복사</button>
+        </div>
+      </div>
+      <div id="inv2" class="tab-content">
+        <div class="code-label">방법 2 — 한 번에 하나씩</div>
+        <div class="code-wrap">
+          <div class="code-block"><span class="kw">Python 맞춤형 학습 계획서를 만들어주세요.</span>
+단, <span class="hl">한 번에 하나의 질문만 하고</span>
+제 답변을 들은 뒤 다음 질문으로 넘어가세요.
+<span class="st">5~7개 질문이 끝나면 맞춤형 학습 계획서를 작성해주세요.</span></div>
+          <button class="copy-btn" onclick="copyCode(this)">복사</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SEC 11: COGNITIVE ── -->
+  <section class="section" id="sec11">
+    <div class="section-header">
+      <div class="section-num">11</div>
+      <div class="section-title-wrap">
+        <h2>인지 검증자 패턴</h2>
+        <p>복잡한 질문을 하위 문제로 분해해서 단계적으로 검증하고 통합해요</p>
+      </div>
+    </div>
+    <div class="callout warn">
+      <span class="icon">⚡</span>
+      <span>일반 패턴은 복잡한 질문에 즉각 답해서 <strong>오류·누락 가능성이 높아요.</strong> 인지 검증자 패턴은 AI가 스스로 분해·검증한 뒤 통합된 판단을 내려요!</span>
+    </div>
+
+    <div style="margin-top:24px">
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab(this,'t11','cog1')">방법 1: 명시적 분해</button>
+        <button class="tab" onclick="switchTab(this,'t11','cog2')">방법 2: 전문가 검증</button>
+      </div>
+      <div id="cog1" class="tab-content active">
+        <div class="code-label">방법 1 — 명시적 분해 요청</div>
+        <div class="code-wrap">
+          <div class="code-block"><span class="kw">아래 질문에 먼저 답하지 말고,</span>
+이 질문을 정확히 답하기 위해 필요한
+<span class="hl">하위 질문을 3~5개 도출하세요.</span>
+
+각 하위 질문에 순서대로 답한 뒤,
+<span class="st">최종 통합 답변을 제시하세요.</span>
+
+<span class="ans">질문: Python으로 무역 데이터 자동화를 구축할 때 클라우드 서버가 필요한가요?</span></div>
+          <button class="copy-btn" onclick="copyCode(this)">복사</button>
+        </div>
+      </div>
+      <div id="cog2" class="tab-content">
+        <div class="code-label">방법 2 — 전문가 검증 방식</div>
+        <div class="code-wrap">
+          <div class="code-block"><span class="kw">{전문 분야} 전문가처럼 이 문제를 다루세요.</span>
+
+<span class="hl">확신이 없는 부분은 가정으로 명시하고</span>
+각 판단의 근거를 함께 제시하면서
+<span class="st">단계적으로 결론에 도달하세요.</span>
+
+<span class="ans">질문: 베트남 생산 법인 설립 시 세금·인력·물류 측면에서 유리한가요?</span></div>
+          <button class="copy-btn" onclick="copyCode(this)">복사</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="step-list">
+      <div class="step-item">
+        <div class="step-left"><div class="step-num">①</div><div class="step-line"></div></div>
+        <div class="step-content"><h4>복잡한 질문 입력</h4><p>전체 맥락과 배경을 포함해 명확하게 질문해요</p></div>
+      </div>
+      <div class="step-item">
+        <div class="step-left"><div class="step-num">②</div><div class="step-line"></div></div>
+        <div class="step-content"><h4>AI가 하위 질문으로 분해</h4><p>복잡한 문제를 3~5개의 검증 가능한 소문제로 나눠요</p></div>
+      </div>
+      <div class="step-item">
+        <div class="step-left"><div class="step-num">③</div><div class="step-line"></div></div>
+        <div class="step-content"><h4>각 질문을 순서대로 검증</h4><p>근거와 가정을 명시하며 단계적으로 답변해요</p></div>
+      </div>
+      <div class="step-item">
+        <div class="step-left"><div class="step-num">④</div></div>
+        <div class="step-content"><h4>검증된 답을 통합해 최종 판단</h4><p>모든 하위 답변을 종합해서 일관된 결론을 도출해요</p></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p style="font-family:var(--display);font-weight:800;font-size:15px;color:var(--text);margin-bottom:6px">✦ 프롬프트 엔지니어링 완전 정복 가이드 ✦</p>
+    <p>총 11가지 핵심 패턴 &nbsp;·&nbsp; 30+ 실전 예시 수록</p>
+  </footer>
+
+</main>
+
+<script>
+function toggleMenu() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+function switchTab(btn, group, targetId) {
+  btn.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  const section = btn.closest('section');
+  section.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  section.querySelector('#' + targetId).classList.add('active');
+}
+
+function copyCode(btn) {
+  const code = btn.previousElementSibling.innerText;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = '복사됨 ✓';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '복사'; btn.classList.remove('copied'); }, 1800);
+  });
+}
+
+/* ── TONE DATA ── */
+const toneData = {
+  humorous:  {
+    label: '😄 유머러스한 톤 — 프롬프트',
+    result: '올해 회사가 "변화"라는 이름의 롤러코스터에 탑승했습니다. 안전벨트 매셨나요? 새 전략, 새 목표—이제 진짜 출발합니다! 🎢',
+    text: `# 입력\n[원본] = "올해 들어 회사는 큰 변화를 맞이했습니다."\n\n# 지시\n다음 톤에 맞춰 위 글을 재작성해주세요.\n\n톤: 유머러스하고 위트 있게\n→ 독자가 피식 웃으며 끝까지 읽을 수 있도록`
+  },
+  emotional: {
+    label: '💗 감정적인 톤 — 프롬프트',
+    result: '힘든 시간이었습니다. 그 모든 노력과 눈물이 이 변화를 만들어냈습니다. 이제 우리, 새로운 꿈을 향해 함께 나아갑니다.',
+    text: `# 입력\n[원본] = "올해 들어 회사는 큰 변화를 맞이했습니다."\n\n# 지시\n다음 톤에 맞춰 위 글을 재작성해주세요.\n\n톤: 감정적이고 공감을 자아내게\n→ 구성원의 감정과 노력을 진심으로 담아서`
+  },
+  warm:      {
+    label: '🌿 따뜻한 톤 — 프롬프트',
+    result: '올 한 해, 우리 모두가 손을 맞잡고 새 길을 걷기 시작했어요. 새 전략과 새 목표, 그리고 함께하는 우리가 있기에 잘 해낼 수 있을 거예요.',
+    text: `# 입력\n[원본] = "올해 들어 회사는 큰 변화를 맞이했습니다."\n\n# 지시\n다음 톤에 맞춰 위 글을 재작성해주세요.\n\n톤: 따뜻하고 친근하게\n→ 가족처럼 모두가 함께한다는 느낌으로`
+  },
+  ironic:    {
+    label: '😏 아이러니한 톤 — 프롬프트',
+    result: '올해도 어김없이 "변화의 시즌"이 찾아왔네요. 전략도 바꾸고 목표도 바꾼다고 합니다. 직원들도 함께 나아간다고 하니, 이번엔 진짜겠죠?',
+    text: `# 입력\n[원본] = "올해 들어 회사는 큰 변화를 맞이했습니다."\n\n# 지시\n다음 톤에 맞춰 위 글을 재작성해주세요.\n\n톤: 아이러니하고 반전 있게\n→ 변화를 에둘러 표현하며 독자가 행간을 읽게 유도`
+  },
+  romantic:  {
+    label: '🌹 로맨틱한 톤 — 프롬프트',
+    result: '새로운 계절이 문을 두드리듯, 회사는 설레는 마음으로 변화를 맞이했습니다. 별을 향해 손을 내밀듯, 우리 모두 함께 나아갑니다.',
+    text: `# 입력\n[원본] = "올해 들어 회사는 큰 변화를 맞이했습니다."\n\n# 지시\n다음 톤에 맞춰 위 글을 재작성해주세요.\n\n톤: 로맨틱하고 서정적으로\n→ 변화를 새로운 계절처럼 시적으로 표현`
+  },
+  formal:    {
+    label: '📊 공식적인 톤 — 프롬프트',
+    result: '당사는 금년도 경영 전략을 전면 재수립하고, 전 임직원 참여 하에 신규 목표를 확정하였습니다.',
+    text: `# 입력\n[원본] = "올해 들어 회사는 큰 변화를 맞이했습니다."\n\n# 지시\n다음 톤에 맞춰 위 글을 재작성해주세요.\n\n톤: 공식적이고 간결하게 (임원 보고용)\n→ 숫자와 성과 중심, 3줄 이내`
+  },
+  technical: {
+    label: '⚙️ 기술적인 톤 — 프롬프트',
+    result: '[Phase 1] 전략 방향 재수립 완료 / [Phase 2] 부서별 KPI 및 목표 설정 / [Phase 3] 전사 실행 로드맵 공유 및 착수',
+    text: `# 입력\n[원본] = "올해 들어 회사는 큰 변화를 맞이했습니다."\n\n# 지시\n다음 톤에 맞춰 위 글을 재작성해주세요.\n\n톤: 기술적이고 구체적으로 (실무자용)\n→ 단계별 변화 내용과 수치 포함`
+  },
+  friendly:  {
+    label: '👋 친근한 톤 — 프롬프트',
+    result: '올해 우리 회사 좀 많이 바뀌었죠? 새 전략에 새 목표까지 — 다 같이 힘내서 새 출발해봐요! 💪',
+    text: `# 입력\n[원본] = "올해 들어 회사는 큰 변화를 맞이했습니다."\n\n# 지시\n다음 톤에 맞춰 위 글을 재작성해주세요.\n\n톤: 쉽고 친근하게\n→ 전문 용어 없이 누구나 이해할 수 있게`
+  },
+};
+
+function selectTone(btn, tone) {
+  document.querySelectorAll('.tone-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  const d = toneData[tone];
+  document.getElementById('tone-result-label').textContent = d.label.split(' — ')[0] + ' 변환 예시';
+  document.getElementById('tone-result-text').textContent = d.result;
+  document.getElementById('tone-preview-label').textContent = d.label;
+  document.getElementById('tone-preview-code').textContent = d.text;
+  document.getElementById('tone-preview').style.display = 'block';
+}
+
+/* ── SCROLL SPY ── */
+const sections = document.querySelectorAll('.section');
+const navItems = document.querySelectorAll('.nav-item');
+
+const spyObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navItems.forEach(n => n.classList.remove('active'));
+      const t = document.querySelector(`.nav-item[href="#${e.target.id}"]`);
+      if (t) t.classList.add('active');
+    }
+  });
+}, { threshold: 0.35 });
+sections.forEach(s => spyObserver.observe(s));
+
+/* ── SCROLL REVEAL ── */
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      revealObserver.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.08 });
+sections.forEach((s, i) => {
+  s.style.transitionDelay = `${i * 0.02}s`;
+  revealObserver.observe(s);
+});
+
+/* ── MOBILE NAV CLOSE ── */
+navItems.forEach(item => {
+  item.addEventListener('click', () => {
+    if (window.innerWidth < 900) document.getElementById('sidebar').classList.remove('open');
+  });
+});
+</script>
+</body>
+</html>
